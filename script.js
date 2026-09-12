@@ -238,7 +238,7 @@ function enhanceSelect(select) {
 
 document.querySelectorAll("#predict-form select").forEach(enhanceSelect);
 
-const API_URL = "http://127.0.0.1:8000/predict";
+const API_URL = "https://student-employability-score-prediction.onrender.com/predict";
 
 const form = document.getElementById("predict-form");
 const submitBtn = document.getElementById("submit-btn");
@@ -646,7 +646,7 @@ form.addEventListener("submit", async (event) => {
     renderScore(body.predicted_employability_score, payload);
   } catch (err) {
     showResultError(
-      "Couldn't reach the prediction service. Make sure the FastAPI server is running at http://127.0.0.1:8000."
+      "Couldn't reach the prediction service. Make sure the FastAPI server is running at https://student-employability-score-prediction.onrender.com."
     );
   } finally {
     setLoading(false);
