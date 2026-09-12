@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Employability Score — Career Readiness Assessment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --text: #F2EDE7;
+  --text-soft: #A79E93;
+  --bg: #1A1714;
+  --surface: #232019;
+  --surface-inset: #17140F;
+  --line: #37322A;
+  --coral: #E2532E;
+  --coral-deep: #C1431F;
+  --amber: #E3A23A;
+  --success: #6BAE7C;
+  --red: #FF6E52;
+  --radius-card: 22px;
+  --radius-field: 10px;
+  font-size: 16px;
+  /* Hints the browser to render native chrome (scrollbars, and — where
+     supported — the select's own options popup) in a dark palette so it
+     doesn't flash white against the rest of the theme. */
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* Live background: layered growth curves rising left-to-right, drawn
+   over a quiet charcoal backdrop — echoing academic progress building up. */
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  background:
+    radial-gradient(120% 90% at 85% -10%, #241D17 0%, transparent 55%),
+    var(--bg);
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 48px 24px 32px;
+}
+
+/* Masthead */
+.masthead {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 40px;
+}
+
+.masthead__mark {
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--coral);
+  color: var(--text);
+  display: grid;
+  place-items: center;
+  font-family: 'Fraunces', serif;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.masthead h1 {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
+}
+
+.masthead p {
+  margin: 0;
+  color: var(--text-soft);
+  max-width: 52ch;
+  font-size: 0.98rem;
+}
+
+/* Layout */
+.layout {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: 32px;
+}
+
+.result-panel {
+  position: sticky;
+  top: 24px;
+}
+
+@media (max-width: 860px) {
+  .result-panel { position: static; }
+}
+
+.panel__title {
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+  font-size: 1.3rem;
+  margin: 0 0 24px;
+}
+
+/* Form field groups */
+.field-group {
+  margin-bottom: 28px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.field-group:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.field-group__label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--coral-deep);
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+.field { margin-bottom: 16px; }
+.field:last-child { margin-bottom: 0; }
+
+.field--pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 480px) {
+  .field--pair { grid-template-columns: 1fr; }
+}
+
+label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+label output {
+  font-weight: 700;
+  color: var(--coral-deep);
+  font-variant-numeric: tabular-nums;
+}
+
+.hint {
+  font-weight: 400;
+  color: var(--text-soft);
+  font-size: 0.78rem;
+}
+
+select,
+input[type="number"] {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-field);
+  background: var(--surface-inset);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Fallback styling for the native <select>, used only if JavaScript is
+   unavailable — the custom-select component below replaces this in
+   normal use so hover colors are fully theme-controlled instead of the
+   browser's own (unstyleable) highlight. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' fill='none' stroke='%23A79E93' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 12px 8px;
+  padding-right: 38px;
+}
+
+select:hover {
+  border-color: #4A4238;
+}
+
+select:focus-visible,
+input[type="number"]:focus-visible,
+input[type="range"]:focus-visible {
+  outline: none;
+  border-color: var(--coral);
+  box-shadow: 0 0 0 3px rgba(226, 83, 46, 0.25);
+}
+
+select:invalid { color: var(--text-soft); }
+
+/* ---------------------------------------------------------------------- *
+ * Custom select: a themed replacement for the native <select> popup.
+ * The browser's own dropdown highlight (that light-blue row you get on
+ * hover) is drawn by the OS and can't be recolored via CSS — so instead
+ * of styling <option>, this builds the open list out of plain <div>s,
+ * which take normal, fully-controllable :hover styles.
+ * The original <select> stays in the DOM (visually hidden) so form
+ * submission and validation keep working exactly as before.
+ * ---------------------------------------------------------------------- */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.select-custom {
+  position: relative;
+  width: 100%;
+}
+
+.select-custom__trigger {
+  all: unset;
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-field);
+  background: var(--surface-inset);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.select-custom__trigger[data-placeholder="true"] {
+  color: var(--text-soft);
+}
+
+.select-custom__trigger:hover {
+  border-color: #4A4238;
+}
+
+.select-custom__trigger:focus-visible,
+.select-custom.is-open .select-custom__trigger {
+  outline: none;
+  border-color: var(--coral);
+  box-shadow: 0 0 0 3px rgba(226, 83, 46, 0.25);
+}
+
+.select-custom__chevron {
+  flex: none;
+  width: 12px;
+  height: 8px;
+  color: var(--text-soft);
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.select-custom.is-open .select-custom__chevron,
+.select-custom__trigger:hover .select-custom__chevron {
+  color: var(--coral);
+}
+
+.select-custom.is-open .select-custom__chevron {
+  transform: rotate(180deg);
+}
+
+.select-custom__list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-field);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.5);
+  padding: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 20;
+  display: none;
+}
+
+.select-custom.is-open .select-custom__list {
+  display: block;
+}
+
+.select-custom__option {
+  padding: 9px 10px;
+  border-radius: 7px;
+  font-size: 0.92rem;
+  line-height: 1.3;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.select-custom__option:hover,
+.select-custom__option.is-active {
+  background: #4D2B1E; /* fallback for browsers without color-mix() support */
+  background: color-mix(in srgb, var(--coral) 22%, var(--surface));
+}
+
+.select-custom__option[aria-selected="true"] {
+  color: var(--coral);
+  font-weight: 600;
+}
+
+/* Number fields with a custom, theme-matched stepper replacing the
+   browser's native (unstyleable) up/down spinner. */
+.number-field {
+  position: relative;
+}
+
+.number-field input[type="number"] {
+  padding-right: 34px;
+  -moz-appearance: textfield;
+}
+
+.number-field input[type="number"]::-webkit-outer-spin-button,
+.number-field input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.number-field__stepper {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  width: 30px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--line);
+  border-radius: 0 var(--radius-field) var(--radius-field) 0;
+  overflow: hidden;
+}
+
+.number-field__btn {
+  all: unset;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.number-field__btn:first-child {
+  border-bottom: 1px solid var(--line);
+}
+
+.number-field__btn::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.number-field__btn--up::before {
+  border-bottom: 5px solid var(--text-soft);
+}
+
+.number-field__btn--down::before {
+  border-top: 5px solid var(--text-soft);
+}
+
+.number-field__btn:hover,
+.number-field__btn:focus-visible {
+  background: rgba(226, 83, 46, 0.14);
+}
+
+.number-field__btn:hover.number-field__btn--up::before,
+.number-field__btn:focus-visible.number-field__btn--up::before {
+  border-bottom-color: var(--coral);
+}
+
+.number-field__btn:hover.number-field__btn--down::before,
+.number-field__btn:focus-visible.number-field__btn--down::before {
+  border-top-color: var(--coral);
+}
+
+/* Range sliders */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--coral) 0%, var(--line) 0%);
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 3px solid var(--coral);
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text);
+  border: 3px solid var(--coral);
+  cursor: pointer;
+}
+
+/* Submit button */
+.btn-predict {
+  width: 100%;
+  margin-top: 8px;
+  padding: 15px;
+  border: none;
+  border-radius: var(--radius-field);
+  background: var(--coral);
+  color: #fff;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.btn-predict:hover { background: var(--coral-deep); }
+.btn-predict:active { transform: scale(0.99); }
+.btn-predict:disabled { opacity: 0.75; cursor: progress; }
+
+.btn-predict__spinner {
+  display: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  animation: spin 0.7s linear infinite;
+}
+
+.btn-predict.is-loading .btn-predict__spinner { display: inline-block; }
+.btn-predict.is-loading .btn-predict__label::after { content: "Calculating…"; }
+.btn-predict.is-loading .btn-predict__label { font-size: 0; }
+.btn-predict.is-loading .btn-predict__label::after { font-size: 1rem; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.form-error {
+  background: #3A211C;
+  color: var(--red);
+  border: 1px solid #5C2E24;
+  padding: 10px 14px;
+  border-radius: var(--radius-field);
+  font-size: 0.88rem;
+  margin: 16px 0 0;
+}
+
+/* Gauge */
+.gauge-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gauge {
+  width: 100%;
+  max-width: 320px;
+  overflow: visible;
+}
+
+.gauge__track,
+.gauge__fill {
+  fill: none;
+  stroke-width: 16;
+  stroke-linecap: round;
+}
+
+.gauge__track { stroke: var(--bg); }
+
+.gauge__fill {
+  stroke: var(--coral);
+  stroke-dasharray: 298;
+  stroke-dashoffset: 298;
+  transition: stroke-dashoffset 1s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.6s ease;
+}
+
+.gauge__needle {
+  stroke: var(--text);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transform-origin: 110px 115px;
+  transform: rotate(-90deg);
+  transition: transform 1.1s cubic-bezier(0.22, 1.28, 0.4, 1);
+}
+
+.gauge__pivot { fill: var(--text); }
+
+.gauge__readout {
+  margin-top: -18px;
+  text-align: center;
+}
+
+.gauge__score {
+  display: block;
+  font-family: 'Fraunces', serif;
+  font-size: 3rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.gauge__score.is-updating {
+  animation: scorePop 0.6s cubic-bezier(0.22, 1.28, 0.4, 1);
+}
+
+@keyframes scorePop {
+  0% { transform: scale(0.86); }
+  55% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.gauge.is-updating {
+  animation: gaugeGlow 1.1s ease-out;
+}
+
+@keyframes gaugeGlow {
+  0% { filter: drop-shadow(0 0 0 rgba(226, 83, 46, 0)); }
+  30% { filter: drop-shadow(0 0 16px rgba(226, 83, 46, 0.55)); }
+  100% { filter: drop-shadow(0 0 0 rgba(226, 83, 46, 0)); }
+}
+
+.gauge__label {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--coral-deep);
+}
+
+.result-note {
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 0.88rem;
+  margin: 20px 0 0;
+}
+
+/* "Where to focus next" — a concrete breakdown of which submitted
+   inputs are pulling the score down, generated from the same values
+   that were sent to the model. */
+.improvement-panel {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.improvement-panel__title {
+  margin: 0 0 10px;
+  font-family: 'Fraunces', serif;
+  font-weight: 500;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.improvement-panel__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.improvement-panel__list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.88rem;
+  color: var(--text-soft);
+  line-height: 1.4;
+}
+
+.improvement-panel__list li::before {
+  content: "";
+  flex: none;
+  width: 7px;
+  height: 7px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+
+.improvement-panel__list li.is-positive::before {
+  background: var(--success);
+}
+
+.improvement-panel__list li.is-positive {
+  color: var(--text);
+}
+
+.result-error {
+  margin-top: 18px;
+  background: #3A211C;
+  color: var(--red);
+  border: 1px solid #5C2E24;
+  padding: 12px 14px;
+  border-radius: var(--radius-field);
+  font-size: 0.88rem;
+}
+
+/* Inline, per-field validation for typed (non-slider) numeric inputs —
+   catches out-of-range values as soon as the person leaves the field,
+   ahead of the full-form check on submit. */
+.field-inline-error {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--red);
+}
+
+.number-field input.is-invalid {
+  border-color: var(--red);
+}
+
+.number-field input.is-invalid:focus-visible {
+  box-shadow: 0 0 0 3px rgba(255, 110, 82, 0.22);
+}
+
+.foot {
+  margin-top: 32px;
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 0.8rem;
+}
+
+.foot code {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+<div class="page">
+
+  <header class="masthead">
+    <div class="masthead__mark">ES</div>
+    <div class="masthead__text">
+      <h1>Employability Score</h1>
+      <p>A predictive read on how your academic record and skills translate into readiness for hire.</p>
+    </div>
+  </header>
+
+  <main class="layout">
+
+    <!-- FORM -->
+    <section class="panel form-panel" aria-labelledby="form-heading">
+      <h2 id="form-heading" class="panel__title">Your profile</h2>
+      <form id="predict-form" novalidate>
+
+        <div class="field-group">
+          <span class="field-group__label">Academics</span>
+
+          <div class="field">
+            <label for="major">Major</label>
+            <select id="major" name="major" required>
+              <option value="" disabled selected>Choose a major</option>
+              <option>Computer Science</option>
+              <option>Software Engineering</option>
+              <option>Artificial Intelligence</option>
+              <option>Data Science</option>
+              <option>Cybersecurity</option>
+              <option>Information Technology</option>
+              <option>Business Analytics</option>
+              <option>Electrical Engineering</option>
+            </select>
+          </div>
+
+          <div class="field field--pair">
+            <div>
+              <label for="cgpa">CGPA <span class="hint">2.0 – 4.0</span></label>
+              <div class="number-field">
+                <input type="number" id="cgpa" name="cgpa" min="2" max="4" step="0.01" placeholder="3.50" required />
+                <div class="number-field__stepper">
+                  <button type="button" class="number-field__btn number-field__btn--up" data-target="cgpa" aria-label="Increase CGPA"></button>
+                  <button type="button" class="number-field__btn number-field__btn--down" data-target="cgpa" aria-label="Decrease CGPA"></button>
+                </div>
+              </div>
+              <span class="field-inline-error" id="cgpa-error" role="alert" hidden></span>
+            </div>
+            <div>
+              <label for="academic_performance">Academic performance</label>
+              <select id="academic_performance" name="academic_performance" required>
+                <option value="" disabled selected>Select</option>
+                <option>Poor</option>
+                <option>Average</option>
+                <option>Good</option>
+                <option>Excellent</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <span class="field-group__label">Skills</span>
+
+          <div class="field field--slider">
+            <label for="programming_skill">Programming skill <output id="programming_skill_out">5</output>/10</label>
+            <input type="range" id="programming_skill" name="programming_skill" min="1" max="10" step="1" value="5" required />
+          </div>
+
+          <div class="field field--slider">
+            <label for="communication_skills">Communication skills <output id="communication_skills_out">5</output>/10</label>
+            <input type="range" id="communication_skills" name="communication_skills" min="3" max="10" step="1" value="5" required />
+          </div>
+
+          <div class="field field--slider">
+            <label for="problem_solving">Problem solving <output id="problem_solving_out">5</output>/10</label>
+            <input type="range" id="problem_solving" name="problem_solving" min="1" max="10" step="1" value="5" required />
+          </div>
+
+          <div class="field">
+            <label for="english_proficiency">English proficiency</label>
+            <select id="english_proficiency" name="english_proficiency" required>
+              <option value="" disabled selected>Select</option>
+              <option>Basic</option>
+              <option>Intermediate</option>
+              <option>Advanced</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <span class="field-group__label">Experience &amp; readiness</span>
+
+          <div class="field field--pair">
+            <div>
+              <label for="internships">Internships completed</label>
+              <div class="number-field">
+                <input type="number" id="internships" name="internships" min="0" max="5" step="1" placeholder="0–5" required />
+                <div class="number-field__stepper">
+                  <button type="button" class="number-field__btn number-field__btn--up" data-target="internships" aria-label="Increase internships"></button>
+                  <button type="button" class="number-field__btn number-field__btn--down" data-target="internships" aria-label="Decrease internships"></button>
+                </div>
+              </div>
+              <span class="field-inline-error" id="internships-error" role="alert" hidden></span>
+            </div>
+            <div>
+              <label for="gitHub_profile">GitHub profile</label>
+              <select id="gitHub_profile" name="gitHub_profile" required>
+                <option value="" disabled selected>Select</option>
+                <option>Yes</option>
+                <option>No</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field field--slider">
+            <label for="resume_score">Resume score <output id="resume_score_out">70</output>/100</label>
+            <input type="range" id="resume_score" name="resume_score" min="44" max="100" step="1" value="70" required />
+          </div>
+
+          <div class="field">
+            <label for="interview_score">Interview score <span class="hint">17 – 100</span></label>
+            <div class="number-field">
+              <input type="number" id="interview_score" name="interview_score" min="17" max="100" step="1" placeholder="e.g. 72" required />
+              <div class="number-field__stepper">
+                <button type="button" class="number-field__btn number-field__btn--up" data-target="interview_score" aria-label="Increase interview score"></button>
+                <button type="button" class="number-field__btn number-field__btn--down" data-target="interview_score" aria-label="Decrease interview score"></button>
+              </div>
+            </div>
+            <span class="field-inline-error" id="interview_score-error" role="alert" hidden></span>
+          </div>
+        </div>
+
+        <p id="form-error" class="form-error" role="alert" hidden></p>
+
+        <button type="submit" id="submit-btn" class="btn-predict">
+          <span class="btn-predict__label">Calculate my score</span>
+          <span class="btn-predict__spinner" aria-hidden="true"></span>
+        </button>
+      </form>
+    </section>
+
+    <!-- RESULT -->
+    <aside class="panel result-panel" aria-labelledby="result-heading">
+      <h2 id="result-heading" class="panel__title">Prediction</h2>
+
+      <div class="gauge-wrap">
+        <svg class="gauge" viewBox="0 0 220 130" aria-hidden="true">
+          <path class="gauge__track" d="M 15 115 A 95 95 0 0 1 205 115" />
+          <path class="gauge__fill" id="gauge-fill" d="M 15 115 A 95 95 0 0 1 205 115" />
+          <line class="gauge__needle" id="gauge-needle" x1="110" y1="115" x2="110" y2="35" />
+          <circle class="gauge__pivot" cx="110" cy="115" r="6" />
+        </svg>
+        <div class="gauge__readout">
+          <span class="gauge__score" id="score-value">—</span>
+          <span class="gauge__label" id="score-band">Awaiting your details</span>
+        </div>
+      </div>
+
+      <p class="result-note" id="result-note">
+        Fill in the profile and calculate to see a predicted employability score out of 100.
+      </p>
+
+      <div class="improvement-panel" id="improvement-panel" hidden>
+        <h3 class="improvement-panel__title" id="improvement-title">Where to focus next</h3>
+        <ul class="improvement-panel__list" id="improvement-list"></ul>
+      </div>
+
+      <div class="result-error" id="result-error" role="alert" hidden></div>
+    </aside>
+
+  </main>
+
+  <footer class="foot">
+    <span>Prediction served locally from <code>http://127.0.0.1:8000/predict</code></span>
+  </footer>
+</div>
+
+<script>
+/* ---------------------------------------------------------------------- *
+ * Live background: layered growth curves, like an academic progress
+ * chart streaming slowly from right to left — each layer trending
+ * gently upward, echoing skills and performance building over time.
+ * Respects prefers-reduced-motion by drawing one still frame instead of
+ * animating.
+ * ---------------------------------------------------------------------- */
+(function initLiveBackground() {
+  const canvas = document.getElementById("bg-canvas");
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext("2d");
+
+  // Back-to-front: furthest layer is faintest and slowest, nearest is
+  // boldest and fastest, giving the scene a little depth.
+  const LAYERS = [
+    { color: [227, 162, 58], alpha: 0.09, speed: 0.0009, amp: 0.05, slope: 0.16, baseline: 0.78, seed: 1.3 },
+    { color: [226, 83, 46], alpha: 0.12, speed: 0.0014, amp: 0.07, slope: 0.24, baseline: 0.66, seed: 4.1 },
+    { color: [226, 83, 46], alpha: 0.20, speed: 0.0020, amp: 0.06, slope: 0.30, baseline: 0.54, seed: 8.7 },
+  ];
+  const MARKER_GAP = 140; // px between data-point markers along a curve
+
+  let width, height, dpr, rafId, t = 0;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  // Height of a curve at horizontal position x (px), for a given layer
+  // and time offset — a gentle upward trend with soft noise on top.
+  function curveY(layer, x, time) {
+    const progress = x / width; // 0 → 1 across the viewport
+    const wobble =
+      Math.sin(progress * 6 + time + layer.seed) * layer.amp +
+      Math.sin(progress * 2.3 - time * 0.6 + layer.seed * 1.7) * layer.amp * 0.6;
+    const trend = layer.baseline - progress * layer.slope + wobble;
+    return trend * height;
+  }
+
+  function drawLayer(layer, time) {
+    const step = 8;
+    ctx.beginPath();
+    ctx.moveTo(0, curveY(layer, 0, time));
+    for (let x = step; x <= width; x += step) {
+      ctx.lineTo(x, curveY(layer, x, time));
+    }
+    ctx.lineTo(width, height);
+    ctx.lineTo(0, height);
+    ctx.closePath();
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+    const [r, g, b] = layer.color;
+    gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${layer.alpha})`);
+    gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(0, curveY(layer, 0, time));
+    for (let x = step; x <= width; x += step) {
+      ctx.lineTo(x, curveY(layer, x, time));
+    }
+    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${Math.min(0.6, layer.alpha + 0.28)})`;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Sparse data-point markers along the line, like readings on a chart.
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${Math.min(0.7, layer.alpha + 0.4)})`;
+    for (let x = MARKER_GAP / 2; x < width; x += MARKER_GAP) {
+      const y = curveY(layer, x, time);
+      ctx.beginPath();
+      ctx.arc(x, y, 2.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, width, height);
+    LAYERS.forEach((layer) => drawLayer(layer, t * layer.speed));
+  }
+
+  function loop() {
+    t += 1;
+    draw();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  window.addEventListener("resize", () => {
+    cancelAnimationFrame(rafId);
+    resize();
+    if (reduceMotion) {
+      draw();
+    } else {
+      loop();
+    }
+  });
+
+  resize();
+  if (reduceMotion) {
+    draw();
+  } else {
+    loop();
+  }
+})();
+
+// Custom number-input steppers (replacing the native, unstyleable
+// up/down spinner) so the controls follow the app's theme.
+document.querySelectorAll(".number-field__btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const input = document.getElementById(btn.dataset.target);
+    if (!input) return;
+    const step = parseFloat(input.step) || 1;
+    const min = input.min !== "" ? parseFloat(input.min) : -Infinity;
+    const max = input.max !== "" ? parseFloat(input.max) : Infinity;
+    const decimals = (input.step.split(".")[1] || "").length;
+    const current = parseFloat(input.value);
+    const base = Number.isNaN(current) ? min : current;
+    const delta = btn.classList.contains("number-field__btn--up") ? step : -step;
+    const next = Math.min(max, Math.max(min, base + delta));
+    input.value = decimals ? next.toFixed(decimals) : String(next);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+});
+
+// Replace native <select> dropdowns with a custom-built listbox so the
+// hovered-option color is fully theme-controlled (the browser's own
+// native highlight — that light-blue row — can't be recolored via CSS).
+// The original <select> is kept, just visually hidden, so form
+// submission and the existing validate()/readFormData() code don't need
+// to change at all.
+function enhanceSelect(select) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "select-custom";
+  select.parentNode.insertBefore(wrapper, select);
+  wrapper.appendChild(select);
+  select.classList.add("visually-hidden");
+  select.tabIndex = -1;
+  select.setAttribute("aria-hidden", "true");
+
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "select-custom__trigger";
+  trigger.setAttribute("aria-haspopup", "listbox");
+  trigger.setAttribute("aria-expanded", "false");
+
+  const labelSpan = document.createElement("span");
+  trigger.appendChild(labelSpan);
+
+  const chevron = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  chevron.setAttribute("class", "select-custom__chevron");
+  chevron.setAttribute("viewBox", "0 0 12 8");
+  chevron.innerHTML =
+    '<path d="M1 1.5L6 6.5L11 1.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>';
+  trigger.appendChild(chevron);
+  wrapper.appendChild(trigger);
+
+  const list = document.createElement("div");
+  list.className = "select-custom__list";
+  list.setAttribute("role", "listbox");
+  wrapper.appendChild(list);
+
+  const rows = [];
+  Array.from(select.options).forEach((opt) => {
+    if (opt.disabled) return; // skip the "Choose…" placeholder
+    const row = document.createElement("div");
+    row.className = "select-custom__option";
+    row.setAttribute("role", "option");
+    row.dataset.value = opt.value;
+    row.textContent = opt.textContent;
+    row.tabIndex = -1;
+    row.addEventListener("click", () => {
+      select.value = opt.value;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+      sync();
+      close();
+      trigger.focus();
+    });
+    row.addEventListener("keydown", (e) => onOptionKeydown(e, row));
+    list.appendChild(row);
+    rows.push(row);
+  });
+
+  function sync() {
+    const current = select.options[select.selectedIndex];
+    const isPlaceholder = !current || current.disabled || current.value === "";
+    labelSpan.textContent = current ? current.textContent : "Select";
+    trigger.dataset.placeholder = isPlaceholder ? "true" : "false";
+    rows.forEach((row) => {
+      row.setAttribute("aria-selected", row.dataset.value === select.value ? "true" : "false");
+    });
+  }
+
+  function open() {
+    wrapper.classList.add("is-open");
+    trigger.setAttribute("aria-expanded", "true");
+  }
+
+  function close() {
+    wrapper.classList.remove("is-open");
+    trigger.setAttribute("aria-expanded", "false");
+  }
+
+  function onOptionKeydown(e, row) {
+    const i = rows.indexOf(row);
+    if (e.key === "ArrowDown") { e.preventDefault(); (rows[i + 1] || rows[0]).focus(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); (rows[i - 1] || rows[rows.length - 1]).focus(); }
+    else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); row.click(); }
+    else if (e.key === "Escape") { close(); trigger.focus(); }
+  }
+
+  trigger.addEventListener("click", () => {
+    wrapper.classList.contains("is-open") ? close() : open();
+  });
+
+  trigger.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { close(); return; }
+    if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      open();
+      const activeIndex = rows.findIndex((r) => r.getAttribute("aria-selected") === "true");
+      (rows[activeIndex + 1] || rows[0])?.focus();
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!wrapper.contains(e.target)) close();
+  });
+
+  sync();
+}
+
+document.querySelectorAll("#predict-form select").forEach(enhanceSelect);
+
+const API_URL = "http://127.0.0.1:8000/predict";
+
+const form = document.getElementById("predict-form");
+const submitBtn = document.getElementById("submit-btn");
+const formError = document.getElementById("form-error");
+const resultError = document.getElementById("result-error");
+const resultNote = document.getElementById("result-note");
+const scoreValue = document.getElementById("score-value");
+const scoreBand = document.getElementById("score-band");
+const gaugeFill = document.getElementById("gauge-fill");
+const gaugeNeedle = document.getElementById("gauge-needle");
+const gaugeSvg = document.querySelector(".gauge");
+const improvementPanel = document.getElementById("improvement-panel");
+const improvementList = document.getElementById("improvement-list");
+const improvementTitle = document.getElementById("improvement-title");
+
+const GAUGE_ARC_LENGTH = 298; // path length of the semicircle drawn in the SVG
+let displayedScore = 0; // last value shown, used as the count-up start point
+let countRafId = null;
+
+// Live-update the slider value readouts and fill color as they're dragged.
+const sliders = [
+  { id: "programming_skill", min: 1, max: 10 },
+  { id: "communication_skills", min: 3, max: 10 },
+  { id: "problem_solving", min: 1, max: 10 },
+  { id: "resume_score", min: 44, max: 100 },
+];
+
+sliders.forEach(({ id, min, max }) => {
+  const input = document.getElementById(id);
+  const output = document.getElementById(`${id}_out`);
+  const paint = () => {
+    output.textContent = input.value;
+    const pct = ((input.value - min) / (max - min)) * 100;
+    input.style.background = `linear-gradient(90deg, var(--coral) ${pct}%, var(--line) ${pct}%)`;
+  };
+  input.addEventListener("input", paint);
+  paint();
+});
+
+// Field-level constraints mirrored from the Student pydantic model,
+// used only to give instant, specific feedback before hitting the API.
+const numericRules = {
+  cgpa: { min: 2, max: 4, label: "CGPA" },
+  internships: { min: 0, max: 5, label: "Internships" },
+  resume_score: { min: 44, max: 100, label: "Resume score" },
+  interview_score: { min: 17, max: 100, label: "Interview score" },
+  programming_skill: { min: 1, max: 10, label: "Programming skill" },
+  communication_skills: { min: 3, max: 10, label: "Communication skills" },
+  problem_solving: { min: 1, max: 10, label: "Problem solving" },
+};
+
+// Real-time, per-field feedback for the freely-typed number inputs.
+// Sliders and dropdowns are structurally impossible to push out of
+// range, so only CGPA, internships, and interview score need this —
+// someone can still type "9.9" into a field that only accepts 2–4.
+const inlineValidatedFields = ["cgpa", "internships", "interview_score"];
+
+inlineValidatedFields.forEach((id) => {
+  const input = document.getElementById(id);
+  const errorEl = document.getElementById(`${id}-error`);
+  const rule = numericRules[id];
+  if (!input || !errorEl || !rule) return;
+
+  function check() {
+    if (input.value === "") {
+      clear();
+      return;
+    }
+    const value = parseFloat(input.value);
+    if (Number.isNaN(value) || value < rule.min || value > rule.max) {
+      input.classList.add("is-invalid");
+      errorEl.textContent = `${rule.label} must be between ${rule.min} and ${rule.max}.`;
+      errorEl.hidden = false;
+    } else {
+      clear();
+    }
+  }
+
+  function clear() {
+    input.classList.remove("is-invalid");
+    errorEl.hidden = true;
+    errorEl.textContent = "";
+  }
+
+  input.addEventListener("blur", check);
+  // While the person is actively typing, only re-check (to clear the
+  // message the moment it's fixed) if an error is already showing —
+  // flagging it on every keystroke before they've finished would nag.
+  input.addEventListener("input", () => {
+    if (!errorEl.hidden) check();
+  });
+});
+
+function readFormData() {
+  const fd = new FormData(form);
+  const raw = Object.fromEntries(fd.entries());
+
+  return {
+    major: raw.major,
+    cgpa: parseFloat(raw.cgpa),
+    academic_performance: raw.academic_performance,
+    programming_skill: parseInt(raw.programming_skill, 10),
+    gitHub_profile: raw.gitHub_profile,
+    internships: parseInt(raw.internships, 10),
+    resume_score: parseInt(raw.resume_score, 10),
+    communication_skills: parseInt(raw.communication_skills, 10),
+    problem_solving: parseInt(raw.problem_solving, 10),
+    english_proficiency: raw.english_proficiency,
+    interview_score: parseInt(raw.interview_score, 10),
+  };
+}
+
+function validate(payload) {
+  // Report the *first* missing field specifically rather than a generic
+  // "fill everything in" — this also guards the case where a field ends
+  // up undefined (e.g. a control temporarily missing from the form)
+  // rather than an empty string, which a strict `=== ""` check would miss.
+  for (const [key, value] of Object.entries(payload)) {
+    if (value === "" || value === null || value === undefined || Number.isNaN(value)) {
+      const label = FIELD_LABELS[key] || key;
+      return `${label} is required — please fill it in.`;
+    }
+  }
+
+  for (const [key, rule] of Object.entries(numericRules)) {
+    const value = payload[key];
+    if (value < rule.min || value > rule.max) {
+      return `${rule.label} must be between ${rule.min} and ${rule.max}.`;
+    }
+  }
+  return null;
+}
+
+function setLoading(isLoading) {
+  submitBtn.disabled = isLoading;
+  submitBtn.classList.toggle("is-loading", isLoading);
+}
+
+function showFormError(message) {
+  if (!message) {
+    formError.hidden = true;
+    formError.textContent = "";
+    return;
+  }
+  formError.hidden = false;
+  formError.textContent = message;
+}
+
+function showResultError(message) {
+  if (!message) {
+    resultError.hidden = true;
+    resultError.textContent = "";
+    return;
+  }
+  resultError.hidden = false;
+  resultError.textContent = message;
+  resultNote.hidden = true;
+  improvementPanel.hidden = true;
+}
+
+function bandFor(score) {
+  if (score < 40) return { label: "Needs development", color: "var(--red)" };
+  if (score < 70) return { label: "On the right track", color: "var(--amber)" };
+  return { label: "Strong hiring readiness", color: "var(--success)" };
+}
+
+// Normalizes every submitted field onto a common 0–100 scale (using the
+// same bounds as the Student model) so weak areas can be compared and
+// ranked against each other, regardless of each field's own units.
+const FACTOR_DEFINITIONS = [
+  {
+    key: "cgpa",
+    normalize: (v) => ((v - 2) / (4 - 2)) * 100,
+    tip: "Raise your CGPA — every step above roughly 3.3 tends to help.",
+  },
+  {
+    key: "programming_skill",
+    normalize: (v) => ((v - 1) / (10 - 1)) * 100,
+    tip: "Sharpen programming skills with more hands-on coding projects.",
+  },
+  {
+    key: "resume_score",
+    normalize: (v) => ((v - 44) / (100 - 44)) * 100,
+    tip: "Polish your resume — clearer structure and stronger project write-ups lift this score.",
+  },
+  {
+    key: "communication_skills",
+    normalize: (v) => ((v - 3) / (10 - 3)) * 100,
+    tip: "Practice communication — mock interviews or presentations both help.",
+  },
+  {
+    key: "problem_solving",
+    normalize: (v) => ((v - 1) / (10 - 1)) * 100,
+    tip: "Build problem-solving skill through more structured practice (DSA, case studies).",
+  },
+  {
+    key: "interview_score",
+    normalize: (v) => ((v - 17) / (100 - 17)) * 100,
+    tip: "Prepare more thoroughly for interviews — this is one of the highest-leverage areas.",
+  },
+  {
+    key: "internships",
+    normalize: (v) => (v / 5) * 100,
+    tip: "Seek out an internship — real-world experience is a strong differentiator.",
+  },
+  {
+    key: "gitHub_profile",
+    normalize: (v) => (v === "Yes" ? 100 : 0),
+    tip: "Start a public GitHub profile to showcase your project work.",
+  },
+  {
+    key: "english_proficiency",
+    normalize: (v) => ({ Basic: 25, Intermediate: 65, Advanced: 100 }[v] ?? 50),
+    tip: "Work on English proficiency — it factors directly into hiring readiness.",
+  },
+  {
+    key: "academic_performance",
+    normalize: (v) => ({ Poor: 15, Average: 45, Good: 75, Excellent: 100 }[v] ?? 50),
+    tip: "Focus on overall academic performance, not just CGPA alone.",
+  },
+];
+
+const IMPROVEMENT_THRESHOLD = 65; // below this normalized score, a factor is flagged
+const MAX_TIPS = 3;
+
+function buildImprovementTips(payload) {
+  if (!payload) return [];
+  const weak = FACTOR_DEFINITIONS.map((factor) => ({
+    ...factor,
+    score: factor.normalize(payload[factor.key]),
+  }))
+    .filter((f) => Number.isFinite(f.score) && f.score < IMPROVEMENT_THRESHOLD)
+    .sort((a, b) => a.score - b.score)
+    .slice(0, MAX_TIPS);
+
+  return weak.map((f) => f.tip);
+}
+
+function renderImprovementPanel(payload) {
+  const tips = buildImprovementTips(payload);
+  improvementList.innerHTML = "";
+
+  if (tips.length === 0) {
+    const li = document.createElement("li");
+    li.className = "is-positive";
+    li.textContent = "Your profile is strong across the board — keep it up.";
+    improvementList.appendChild(li);
+    improvementTitle.textContent = "How you're doing";
+  } else {
+    improvementTitle.textContent = "Where to focus next";
+    tips.forEach((tip) => {
+      const li = document.createElement("li");
+      li.textContent = tip;
+      improvementList.appendChild(li);
+    });
+  }
+  improvementPanel.hidden = false;
+}
+
+function retriggerAnimation(el, className) {
+  // Removing then re-adding a class in the same frame doesn't restart a
+  // CSS animation, so force a reflow in between — this makes the pulse
+  // fire every time, even if the predicted score repeats exactly.
+  el.classList.remove(className);
+  void el.offsetWidth;
+  el.classList.add(className);
+}
+
+function animateCountUp(from, to, durationMs = 900) {
+  if (countRafId) cancelAnimationFrame(countRafId);
+  const start = performance.now();
+  const easeOutCubic = (p) => 1 - Math.pow(1 - p, 3);
+
+  function tick(now) {
+    const progress = Math.min(1, (now - start) / durationMs);
+    const eased = easeOutCubic(progress);
+    const value = from + (to - from) * eased;
+    scoreValue.textContent = value.toFixed(2);
+    if (progress < 1) {
+      countRafId = requestAnimationFrame(tick);
+    } else {
+      scoreValue.textContent = to.toFixed(2);
+      displayedScore = to;
+    }
+  }
+  countRafId = requestAnimationFrame(tick);
+}
+
+function renderScore(score, payload) {
+  const clamped = Math.max(0, Math.min(100, score));
+  const { label, color } = bandFor(clamped);
+
+  animateCountUp(displayedScore, score);
+  scoreBand.textContent = label;
+  scoreBand.style.color = color;
+
+  const offset = GAUGE_ARC_LENGTH - (clamped / 100) * GAUGE_ARC_LENGTH;
+  gaugeFill.style.stroke = color;
+  gaugeFill.style.strokeDashoffset = offset;
+
+  const angle = (clamped / 100) * 180 - 90;
+  gaugeNeedle.style.transform = `rotate(${angle}deg)`;
+
+  retriggerAnimation(scoreValue, "is-updating");
+  retriggerAnimation(gaugeSvg, "is-updating");
+
+  renderImprovementPanel(payload);
+
+  resultNote.hidden = true;
+  resultError.hidden = true;
+}
+
+function resetGauge() {
+  displayedScore = 0;
+  scoreValue.textContent = "—";
+  scoreBand.textContent = "Awaiting your details";
+  scoreBand.style.color = "var(--text-soft)";
+  gaugeFill.style.strokeDashoffset = GAUGE_ARC_LENGTH;
+  gaugeNeedle.style.transform = "rotate(-90deg)";
+  improvementPanel.hidden = true;
+}
+
+// Human-readable labels for every field, matching what's shown on the
+// form itself — used to translate FastAPI's raw Pydantic error text
+// (e.g. "Field required", "Input should be greater than or equal to 2")
+// into something a non-technical user can act on.
+const FIELD_LABELS = {
+  major: "Major",
+  cgpa: "CGPA",
+  academic_performance: "Academic performance",
+  programming_skill: "Programming skill",
+  gitHub_profile: "GitHub profile",
+  internships: "Internships",
+  resume_score: "Resume score",
+  communication_skills: "Communication skills",
+  problem_solving: "Problem solving",
+  english_proficiency: "English proficiency",
+  interview_score: "Interview score",
+};
+
+function humanizeFieldError(field, rawMsg) {
+  const label = FIELD_LABELS[field] || field;
+  const msg = (rawMsg || "").toLowerCase();
+
+  if (msg.includes("field required") || msg.includes("missing")) {
+    return `${label} is required — please fill it in.`;
+  }
+  if (numericRules[field] && (msg.includes("greater than") || msg.includes("less than"))) {
+    const { min, max } = numericRules[field];
+    return `${label} must be between ${min} and ${max}.`;
+  }
+  if (msg.includes("enumeration") || msg.includes("not a valid") || msg.includes("literal")) {
+    return `${label} must be one of the listed options.`;
+  }
+  return `${label}: please check this value and try again.`;
+}
+
+function extractApiErrorMessage(status, body) {
+  if (status === 422 && body && Array.isArray(body.detail)) {
+    const first = body.detail[0];
+    const field = Array.isArray(first.loc) ? first.loc[first.loc.length - 1] : null;
+    return field
+      ? humanizeFieldError(field, first.msg)
+      : "Some of the submitted values were invalid. Please check the form and try again.";
+  }
+  if (body && typeof body.detail === "string") {
+    return body.detail;
+  }
+  return `The server responded with an error (status ${status}).`;
+}
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  showFormError(null);
+  showResultError(null);
+
+  const payload = readFormData();
+  const validationMessage = validate(payload);
+  if (validationMessage) {
+    showFormError(validationMessage);
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    let body = null;
+    try {
+      body = await response.json();
+    } catch {
+      body = null;
+    }
+
+    if (!response.ok) {
+      showResultError(extractApiErrorMessage(response.status, body));
+      return;
+    }
+
+    renderScore(body.predicted_employability_score, payload);
+  } catch (err) {
+    showResultError(
+      "Couldn't reach the prediction service. Make sure the FastAPI server is running at http://127.0.0.1:8000."
+    );
+  } finally {
+    setLoading(false);
+  }
+});
+
+resetGauge();
+
+</script>
+</body>
+</html>
